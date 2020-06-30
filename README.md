@@ -1,2 +1,3 @@
 # harjoitus_verkko
-kokeilen eri hyperparametrejä
+kokeilen eri hyperparametrejä jee
+
