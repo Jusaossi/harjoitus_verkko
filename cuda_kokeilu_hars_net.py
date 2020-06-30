@@ -21,7 +21,7 @@ koti = False
 
 if koti:
     my_add = r'C:\Users\jpkorpel\PycharmProjects\uusi_sika\tooth_net'
-    my_path = os.path.join(my_add, 'data')
+    my_path = os.path.join(my_add, 'print_folder')
     print()
     X_data = np.load(r'C:\Users\jpkorpel\Desktop\hammas\andy\X_andy.npy')
     X_data = X_data[70:72]
@@ -29,9 +29,11 @@ if koti:
     Y_data = Y_data[70:72]
     card = 'cpu'
 else:
-    my_path = os.path.join(os.getcwd(), 'data')
-    X_data = np.load('X_data_joint.npy')
-    Y_data = np.load('Y_data_joint.npy')
+    my_parent_dir = os.path.dirname(os.getcwd())
+    my_data_folder = os.path.join(my_parent_dir, 'tooth_data')
+    my_path = os.path.join(os.getcwd(), 'print_folder')
+    X_data = np.load(os.path.join(my_data_folder, 'X_data_joint.npy'))
+    Y_data = np.load(os.path.join(my_data_folder, 'Y_data_joint.npy'))
     card = 'cuda'
 
 
@@ -42,7 +44,7 @@ print('Y_shape = ', Y_data.shape)
 print('Y_dtype = ', Y_data.dtype)
 print('datat saatana ladattu.... tarkista vielä miksi Y ja X eri tyyppejä kun teet niitä lisää... oi miksi????')
 
-
+kill()
 norm_data = True
 scale_data = False
 if norm_data:
