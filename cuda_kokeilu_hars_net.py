@@ -20,7 +20,7 @@ koti = False
 
 
 if koti:
-    my_add = r'C:\Users\jpkorpel\PycharmProjects\uusi_sika\tooth_net'
+    my_add = r'C:\Users\jpkorpel\PycharmProjects\uusi_sika\harjoitus_verkko'
     my_path = os.path.join(my_add, 'print_folder')
     print()
     X_data = np.load(r'C:\Users\jpkorpel\Desktop\hammas\andy\X_andy.npy')
@@ -44,7 +44,7 @@ print('Y_shape = ', Y_data.shape)
 print('Y_dtype = ', Y_data.dtype)
 print('datat saatana ladattu.... tarkista vielä miksi Y ja X eri tyyppejä kun teet niitä lisää... oi miksi????')
 
-kill()
+
 norm_data = True
 scale_data = False
 if norm_data:
@@ -208,8 +208,11 @@ def l1_loss(a, b):
 
 d_batch_loss = {}
 d_batch_l1 = {}
-
-learning_rates = [0.0005, 0.001, 0.005, 0.01]
+d_epoch_loss = {}
+d_epoch_l1 = {}
+d_epoch_max_loss = {}
+d_epoch_max_l1 = {}
+learning_rates = [0.0005, 0.001] #, 0.005, 0.01]
 
 for lr in learning_rates:
 
@@ -220,13 +223,19 @@ for lr in learning_rates:
     loss_BCE = torch.nn.BCELoss()
     optimizer = optim.Adam(network.parameters(), lr=lr)
 
-    epoch_times = 10 # for future
+    epoch_times = 10   # for future
 
     sika = True
     print('epoch_times', epoch_times)
-    batch_loss = []
-    sum_of_wrong = []
+    all_batch_loss = []
+    all_sum_of_wrong = []
+    epoch_loss = []
+    epoch_l1 = []
+    epoch_max_loss = []
+    epoch_max_l1 = []
     for epoch in range(1, epoch_times + 1):
+        batch_loss = []
+        sum_of_wrong = []
         for batch_id, batch in enumerate(train_loader):  # get batch
             start_time = time.time()
             images, labels = batch
@@ -245,11 +254,13 @@ for lr in learning_rates:
             loss = loss_BCE(preds, labels)  # .. tensor(0.6402, device='cuda:0', grad_fn=<BinaryCrossEntropyBackward>)
             #print(loss)
 
+            all_batch_loss.append(loss.item())
             batch_loss.append(loss.item())
             #print(batch_loss)
 
             my_help = l1_loss(preds, labels)
             print('sum of wrong pixels:', my_help)
+            all_sum_of_wrong.append(my_help)
             sum_of_wrong.append(my_help)
             optimizer.zero_grad()
             loss.backward()  # Calculate Gradients
@@ -262,16 +273,27 @@ for lr in learning_rates:
             del loss
             del preds
             torch.cuda.empty_cache()
-    d_batch_l1[lr] = sum_of_wrong
-    d_batch_loss[lr] = batch_loss
 
-string1 = 'Abolute errors when lr=' + str(learning_rates)
+        epoch_loss.append(sum(batch_loss)/len(batch_loss))
+        epoch_l1.append(sum(sum_of_wrong)/len(sum_of_wrong))
+        epoch_max_loss.append(max(batch_loss))
+        epoch_max_l1.append(max(sum_of_wrong))
+    d_batch_l1[lr] = all_sum_of_wrong
+    d_batch_loss[lr] = all_batch_loss
+    d_epoch_loss[lr] = epoch_loss
+    d_epoch_l1[lr] = epoch_l1
+    d_epoch_max_loss[lr] = epoch_max_loss
+    d_epoch_max_l1[lr] = epoch_max_l1
+
+
+string1 = 'Sum of Abolute errors of pixels in slices'
 plt.figure(1)
 plt.title(string1)
 plt.xlabel('slice number')
 plt.ylabel('L1-error')
 for lr in learning_rates:
-    plt.plot(range(len(d_batch_l1[lr])), d_batch_l1[lr])
+    plt.plot(range(1, len(d_batch_l1[lr]) + 1), d_batch_l1[lr], label='lr=' + str(lr))
+plt.legend(loc="upper right")
 
 my_file = 'Abolute_errors_with_different_lr.png'
 plt.savefig(os.path.join(my_path, my_file))
@@ -280,46 +302,96 @@ plt.close()
 
 
 
-string2 = 'loss_results when lr=' + str(learning_rates)
+string2 = 'BCE loss for all slices'
 plt.figure(2)
 plt.title(string2)
 plt.xlabel('slice number')
 plt.ylabel('torch.nn.BCELoss()')
 for lr in learning_rates:
-    plt.plot(range(len(d_batch_loss[lr])), d_batch_loss[lr])
+    plt.plot(range(1, len(d_batch_loss[lr]) + 1), d_batch_loss[lr], label='lr=' + str(lr))
+plt.legend(loc="upper right")
 
 my_file = 'BCEloss_errors_with_different_lr.png'
 plt.savefig(os.path.join(my_path, my_file))
 plt.close()
 
-fig = plt.figure()
+fig = plt.figure(3)
 j = 0
 for lr in learning_rates:
     j += 1
-    string2 = 'lr=' + str(lr)
+    string3 = 'lr=' + str(lr)
     plt.subplot(2, 2, j)
-    plt.title(string2)
+    plt.title(string3)
     #plt.xlabel('slice number')
     #plt.ylabel('torch.nn.BCELoss()')
-    plt.plot(range(len(d_batch_loss[lr])), d_batch_loss[lr])
-
-plt.subplots_adjust(left=0.15,
+    plt.plot(range(1, len(d_batch_loss[lr]) + 1), d_batch_loss[lr])
+    plt.ylim(0, 1)
+    plt.subplots_adjust(left=0.15,
                     bottom=0.15,
                     right=0.85,
                     top=0.85,
                     wspace=0.3,
                     hspace=0.35)
+
+
 fig.suptitle('BCEloss_errors_with_different_lr wrt slice-number', fontsize=14)
 my_file = 'BCEloss_errors_with_different_lr_sub_plots.png'
 plt.savefig(os.path.join(my_path, my_file))
 plt.close()
 
-    # plt.figure()
-    # plt.plot(range(1, epoch_times + 1), lossu)
-    # my_file = 'kuva2.png'
-    # plt.savefig(os.path.join(my_path, my_file))
-    # plt.close()
 
+string4 = 'Average abolute error to slices in epoch'
+plt.figure(4)
+plt.title(string4)
+plt.xlabel('Epoch number')
+plt.ylabel('Average L1-error')
+for lr in learning_rates:
+    plt.plot(range(1, len(d_epoch_l1[lr]) + 1), d_epoch_l1[lr], label='lr=' + str(lr))
+plt.legend(loc="upper right")
+
+my_file = 'Average_Epoch_Abolute_errors_with_different_lr.png'
+plt.savefig(os.path.join(my_path, my_file))
+plt.close()
+
+string5 = 'Average Bce_loss_results to slices in epoch'
+plt.figure(5)
+plt.title(string5)
+plt.xlabel('Epoch number')
+plt.ylabel('Average torch.nn.BCELoss()')
+for lr in learning_rates:
+    plt.plot(range(1, len(d_epoch_loss[lr]) + 1), d_epoch_loss[lr], label='lr=' + str(lr))
+plt.legend(loc="upper right")
+
+my_file = 'Average_epoch_BCEloss_errors_with_different_lr.png'
+plt.savefig(os.path.join(my_path, my_file))
+plt.close()
+
+
+string6 = 'Max abolute error to slice in epoch'
+plt.figure(6)
+plt.title(string6)
+plt.xlabel('Epoch number')
+plt.ylabel('Max L1-error')
+for lr in learning_rates:
+    plt.plot(range(1, len(d_epoch_max_l1[lr]) + 1), d_epoch_max_l1[lr], label='lr=' + str(lr))
+plt.legend(loc="upper right")
+
+my_file = 'Max_Epoch_Abolute_errors_with_different_lr.png'
+plt.savefig(os.path.join(my_path, my_file))
+plt.close()
+
+string7 = 'Max Bce_loss to slice in epoch'
+plt.figure(7)
+plt.title(string7)
+plt.xlabel('Epoch number')
+plt.ylabel('Max torch.nn.BCELoss()')
+for lr in learning_rates:
+    plt.plot(range(1, len(d_epoch_max_loss[lr]) + 1), d_epoch_max_loss[lr], label='lr=' + str(lr))
+plt.legend(loc="upper right")
+
+my_file = 'Max_epoch_BCEloss_errors_with_different_lr.png'
+plt.savefig(os.path.join(my_path, my_file))
+plt.close()
 
 
 
