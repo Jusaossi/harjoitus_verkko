@@ -212,7 +212,7 @@ d_epoch_loss = {}
 d_epoch_l1 = {}
 d_epoch_max_loss = {}
 d_epoch_max_l1 = {}
-learning_rates = [0.0005, 0.001] #, 0.005, 0.01]
+learning_rates = [0.0001, 0.0003, 0.0005, 0.001, 0.005, 0.01]
 
 for lr in learning_rates:
 
@@ -223,7 +223,7 @@ for lr in learning_rates:
     loss_BCE = torch.nn.BCELoss()
     optimizer = optim.Adam(network.parameters(), lr=lr)
 
-    epoch_times = 10   # for future
+    epoch_times = 15   # for future
 
     sika = True
     print('epoch_times', epoch_times)
@@ -320,7 +320,7 @@ j = 0
 for lr in learning_rates:
     j += 1
     string3 = 'lr=' + str(lr)
-    plt.subplot(2, 2, j)
+    plt.subplot(3, 2, j)
     plt.title(string3)
     #plt.xlabel('slice number')
     #plt.ylabel('torch.nn.BCELoss()')
